@@ -1,6 +1,9 @@
 Clone the repository using : git clone https://github.com/pranavsatheesh/newsapi.git
+
 After cloning the project. Import the database newsdb.sql to a new schema.
+
 In conf -> app.conf
+            
             Edit app.conf
                  httpport = 1024 to available port number.
                  Db details as per your local configurations
