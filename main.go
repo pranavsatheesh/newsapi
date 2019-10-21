@@ -8,7 +8,8 @@ import (
 )
 
 func main() {
-	beego.Router("/index",&controllers.NewsController{},"*:Index")
+	go controllers.DBMigrate()
+	beego.Router("/index", &controllers.NewsController{}, "*:Index")
 	beego.Router("/news/:data", &controllers.NewsController{}, "*:NewsRead")
 	beego.Run()
 }

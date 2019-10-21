@@ -137,3 +137,8 @@ func (c *Client) GetNews() (Resp, error) {
 	re.Response = response
 	return re, err
 }
+func DBMigrate() {
+	dbName := beego.AppConfig.String("dbName")
+	models.DropDb(dbName)
+	models.CreateDB(dbName)
+}

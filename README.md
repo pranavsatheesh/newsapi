@@ -1,6 +1,6 @@
 Clone the repository using : git clone https://github.com/pranavsatheesh/newsapi.git
 
-After cloning the project. Import the database newsdb.sql to a new schema.
+After cloning the project. 
 
 In conf -> app.conf
             
@@ -12,5 +12,6 @@ In conf -> app.conf
                     dbPass=root
                     dbName=news
 Run build file ./news
+It automatically creates database. (Make sure parameters in app.conf is valid. Database structure is also available in prokect folder news_db.sql)
 
 To get the view page either use 'http://localhost:1024/index' or use index.html.

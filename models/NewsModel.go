@@ -65,6 +65,7 @@ func CheckQueryExist(query string, crntDate string) int {
 	if err != nil {
 		panic(err.Error())
 	}
+
 	return qryExist
 }
 
@@ -80,7 +81,7 @@ func GetNewsFromDB(query string) *Response {
 	resp.News.Status = "ok"
 	resCount := 0
 	resp.News.Articles = []Article{}
-	SelNews, err := db.Query("SELECT  ContentAuthor, ContentDescription, ContentPublishedAt, ContentTitle, ContentUrl, ContentUrlImage, ContentSourceId, ContentSourceName FROM query LEFT JOIN content ON content.ContentQueryName = query.QueryName where query.QueryName=?", query)
+	SelNews, err := db.Query("SELECT  ContentAuthor, ContentDescription, ContentPublishedAt, ContentTitle, ContentUrl, ContentUrlImage, ContentSourceId, ContentSourceName FROM query LEFT JOIN content ON content.ContentQueryName = query.QueryName where query.QueryName=? order by ContentId", query)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -103,6 +104,7 @@ func GetNewsFromDB(query string) *Response {
 		articleData.Source = sourceData
 		resp.News.Articles = append(resp.News.Articles, articleData)
 	}
+	SelNews.Close()
 	resp.News.TotalResults = resCount
 	return resp
 }
@@ -130,5 +132,48 @@ func InsertNewsContent(r *Response, query string, crntDate string) {
 			_, err = cntntInstStmt.Exec(query, x.Author, x.Description, x.PublishedAt, x.Title, x.URL, x.URLToImage, x.Source.ID, x.Source.Name)
 			tx.Commit()
 		}
+	}
+}
+
+/*
+Creates a Db Connection for database migration
+*/
+func SQLConnection() *sql.DB {
+	dbDet := DBDetails{}
+	dbDet.DbDriver = beego.AppConfig.String("dbDriver")
+	dbDet.DbUser = beego.AppConfig.String("dbUser")
+	dbDet.Dbpassword = beego.AppConfig.String("dbPass")
+	db, err := sql.Open(dbDet.DbDriver, dbDet.DbUser+":"+dbDet.Dbpassword+"@/")
+	if err != nil {
+		panic(err.Error())
+	}
+	return db
+}
+func DropDb(dbName string) {
+	db := SQLConnection()
+	defer db.Close()
+	_, _ = db.Exec("DROP SCHEMA IF EXISTS " + dbName)
+}
+func CreateDB(dbName string) {
+	db := SQLConnection()
+	defer db.Close()
+
+	_, err := db.Exec("CREATE SCHEMA " + dbName)
+	if err != nil {
+
+		panic(err.Error())
+	}
+	_, err = db.Exec("USE " + dbName)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = db.Exec("CREATE TABLE query ( QueryName varchar(45) NOT NULL, CreatedDate timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	if err != nil {
+		panic(err)
+	}
+	_, err = db.Exec("CREATE TABLE content ( ContentId int(11) NOT NULL AUTO_INCREMENT, ContentSourceId varchar(10) DEFAULT NULL, ContentSourceName tinytext, ContentQueryName varchar(45) NOT NULL, ContentAuthor tinytext, ContentDescription text, ContentPublishedAt varchar(45) DEFAULT NULL, ContentTitle tinytext NOT NULL, ContentUrl tinytext, ContentUrlImage text, PRIMARY KEY (ContentId) ) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	if err != nil {
+		panic(err)
 	}
 }
