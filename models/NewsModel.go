@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"log"
 
 	"github.com/astaxie/beego"
 	_ "github.com/go-sql-driver/mysql"
@@ -82,7 +81,7 @@ func GetNewsFromDB(query string) *Response {
 	resp.News.Status = "ok"
 	resCount := 0
 	resp.News.Articles = []Article{}
-	SelNews, err := db.Query("SELECT  ContentAuthor, ContentDescription, ContentPublishedAt, ContentTitle, ContentUrl, ContentUrlImage, ContentSourceId, ContentSourceName FROM query LEFT JOIN content ON content.ContentQueryName = query.QueryName where query.QueryName=? order by ", query)
+	SelNews, err := db.Query("SELECT  ContentAuthor, ContentDescription, ContentPublishedAt, ContentTitle, ContentUrl, ContentUrlImage, ContentSourceId, ContentSourceName FROM query LEFT JOIN content ON content.ContentQueryName = query.QueryName where query.QueryName=? order by ContentId", query)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -135,11 +134,11 @@ func InsertNewsContent(r *Response, query string, crntDate string) {
 		}
 	}
 }
+
 /*
 Creates a Db Connection for database migration
 */
-func DbConnection() *sql.DB {
-	log.Println("in dbConnection")
+func SQLConnection() *sql.DB {
 	dbDet := DBDetails{}
 	dbDet.DbDriver = beego.AppConfig.String("dbDriver")
 	dbDet.DbUser = beego.AppConfig.String("dbUser")
@@ -151,12 +150,12 @@ func DbConnection() *sql.DB {
 	return db
 }
 func DropDb(dbName string) {
-	db := DbConnection()
+	db := SQLConnection()
 	defer db.Close()
 	_, _ = db.Exec("DROP SCHEMA IF EXISTS " + dbName)
 }
 func CreateDB(dbName string) {
-	db := DbConnection()
+	db := SQLConnection()
 	defer db.Close()
 
 	_, err := db.Exec("CREATE SCHEMA " + dbName)
@@ -168,11 +167,12 @@ func CreateDB(dbName string) {
 	if err != nil {
 		panic(err)
 	}
-	_, err = db.Exec("CREATE TABLE content ( ContentId int(11) NOT NULL AUTO_INCREMENT, ContentSourceId varchar(10) DEFAULT NULL, ContentSourceName tinytext, ContentQueryName varchar(45) NOT NULL, ContentAuthor tinytext, ContentDescription text, ContentPublishedAt varchar(45) DEFAULT NULL, ContentTitle tinytext NOT NULL, ContentUrl tinytext, ContentUrlImage text, PRIMARY KEY (ContentId) ) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+
+	_, err = db.Exec("CREATE TABLE query ( QueryName varchar(45) NOT NULL, CreatedDate timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ) ENGINE=InnoDB DEFAULT CHARSET=latin1")
 	if err != nil {
 		panic(err)
 	}
-	_, err = db.Exec("CREATE TABLE query ( QueryName varchar(45) NOT NULL, CreatedDate timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	_, err = db.Exec("CREATE TABLE content ( ContentId int(11) NOT NULL AUTO_INCREMENT, ContentSourceId varchar(10) DEFAULT NULL, ContentSourceName tinytext, ContentQueryName varchar(45) NOT NULL, ContentAuthor tinytext, ContentDescription text, ContentPublishedAt varchar(45) DEFAULT NULL, ContentTitle tinytext NOT NULL, ContentUrl tinytext, ContentUrlImage text, PRIMARY KEY (ContentId) ) ENGINE=InnoDB DEFAULT CHARSET=latin1")
 	if err != nil {
 		panic(err)
 	}
