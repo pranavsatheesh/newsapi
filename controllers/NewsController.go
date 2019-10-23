@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -101,13 +103,33 @@ func NewClient() *Client {
 /*
 Addoptions return url.Values from Options Struct
 */
-func (o *Options) AddOptions() url.Values {
+func (o Options) AddOptions() url.Values {
+
 	urlValues := url.Values{}
-	urlValues.Add("q", o.Q)
-	urlValues.Add("sortBy", o.SortBy)
-	urlValues.Add("apiKey", o.APIKey)
-	urlValues.Add("pageSize", o.pageSize)
-	urlValues.Add("language", o.Language)
+
+	v := reflect.ValueOf(o)
+
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Type().Field(i).Name
+		value := v.Field(i)
+
+		fieldLower := strings.ToLower(string(field))
+
+		switch value.Kind() {
+
+		case reflect.String:
+			if len(value.String()) > 0 {
+				urlValues.Add(fieldLower, value.String())
+			}
+
+		case reflect.Int64:
+			intString := strconv.FormatInt(value.Int(), 10)
+			if len(intString) > 0 {
+				urlValues.Add(fieldLower, value.String())
+			}
+		}
+	}
+
 	return urlValues
 }
 
